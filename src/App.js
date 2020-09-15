@@ -1,10 +1,41 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
+
+const lookup = (id, q) => {
+  return `
+<CityStateLookupRequest USERID=${id}>
+<ZipCode ID='0'>
+<Zip5>${q}</Zip5>
+</ZipCode>
+</CityStateLookupRequest>
+`;
+};
 
 function App() {
   const initialCityState = { city: "", state: "" };
   const [zipcode, setZipcode] = useState("");
   const [cityState, setCityState] = useState(initialCityState);
+  const url = `https://secure.shippingapis.com/ShippingAPI.dll?API=CityStateLookup&XML=`;
+  const config = { headers: { "Content-Type": "text/xml" } };
+  const userId = process.env.REACT_APP_USERID;
+
+  console.log(process.env.REACT_APP_USERID);
+  useEffect(() => {
+    const fetchCityState = async () => {
+      try {
+        const response = await fetch(
+          `${url}${lookup(userId, zipcode)}`,
+          config
+        );
+        const data = response;
+        console.log(data);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    fetchCityState();
+  }, [zipcode.length === 5]);
+
   return (
     <div className="App">
       <h1>City/State Lookup Tool</h1>
