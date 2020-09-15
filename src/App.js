@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 const lookup = (id, q) => {
-  return `
-<CityStateLookupRequest USERID=${id}>
-<ZipCode ID='0'>
-<Zip5>${q}</Zip5>
-</ZipCode>
-</CityStateLookupRequest>
-`;
+  return `<CityStateLookupRequest USERID=${id}><ZipCode ID='0'><Zip5>${q}</Zip5></ZipCode></CityStateLookupRequest>`;
 };
 
 function App() {
@@ -16,10 +10,16 @@ function App() {
   const [zipcode, setZipcode] = useState("");
   const [cityState, setCityState] = useState(initialCityState);
   const url = `https://secure.shippingapis.com/ShippingAPI.dll?API=CityStateLookup&XML=`;
-  const config = { headers: { "Content-Type": "text/xml" } };
+  const config = {
+    headers: {
+      "Content-Type": "text/xml; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    },
+    method: "get",
+  };
   const userId = process.env.REACT_APP_USERID;
 
-  console.log(process.env.REACT_APP_USERID);
+  console.log(`${url}${lookup(userId, zipcode)}`);
   useEffect(() => {
     const fetchCityState = async () => {
       try {
@@ -28,7 +28,7 @@ function App() {
           config
         );
         const data = response;
-        console.log(data);
+        console.log(response);
       } catch (e) {
         console.log(e);
       }
