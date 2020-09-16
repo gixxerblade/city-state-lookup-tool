@@ -1,40 +1,28 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const lookup = (id, q) => {
-  return `<CityStateLookupRequest USERID=${id}><ZipCode ID='0'><Zip5>${q}</Zip5></ZipCode></CityStateLookupRequest>`;
-};
-
 function App() {
   const initialCityState = { city: "", state: "" };
   const [zipcode, setZipcode] = useState("");
   const [cityState, setCityState] = useState(initialCityState);
-  const url = `https://secure.shippingapis.com/ShippingAPI.dll?API=CityStateLookup&XML=`;
-  const config = {
-    headers: {
-      "Content-Type": "text/xml; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
-    },
-    method: "get",
-  };
-  const userId = process.env.REACT_APP_USERID;
 
-  console.log(`${url}${lookup(userId, zipcode)}`);
+  const zipLen = zipcode.length === 5 && zipcode;
   useEffect(() => {
     const fetchCityState = async () => {
       try {
         const response = await fetch(
-          `${url}${lookup(userId, zipcode)}`,
-          config
+          `../functions/getCityState/${zipcode}`,
+          {}
         );
-        const data = response;
-        console.log(response);
+        const data = await response.text();
+        console.log(data);
       } catch (e) {
         console.log(e);
       }
     };
     fetchCityState();
-  }, [zipcode.length === 5]);
+    // eslint-disable-next-line
+  }, [zipLen]);
 
   return (
     <div className="App">
