@@ -3,9 +3,13 @@ const USERID = process.env.REACT_APP_USERID;
 const BASE_URI =
   "http://production.shippingapis.com/ShippingAPITest.dll?API=CityStateLookup&XML=";
 const config = {
-  headers: { "Content-Type": "text/xml", "Access-Control-Allow-Origin": "*" },
+  headers: {
+    "Content-Type": "text/xml",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": true,
+    "Access-Control-Allow-Methods": "GET",
+  },
   method: "get",
-  mode: "no-cors",
 };
 
 exports.handler = async function (event, context) {
