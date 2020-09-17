@@ -5,6 +5,7 @@ const BASE_URI =
 const config = {
   headers: { "Content-Type": "text/xml", "Access-Control-Allow-Origin": "*" },
   method: "get",
+  mode: "cors",
 };
 
 exports.handler = async function (event, context) {
