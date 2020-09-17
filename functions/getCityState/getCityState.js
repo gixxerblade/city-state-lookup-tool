@@ -2,7 +2,10 @@ const fetch = require("node-fetch");
 const USERID = process.env.REACT_APP_USERID;
 const BASE_URI =
   "http://production.shippingapis.com/ShippingAPITest.dll?API=CityStateLookup&XML=";
-const config = { headers: { "Content-Type": "text/xml" }, method: "get" };
+const config = {
+  headers: { "Content-Type": "text/xml", "Access-Control-Allow-Origin": "*" },
+  method: "get",
+};
 
 exports.handler = async function (event, context) {
   const zipcode = event.queryStringParameters.zipcode;
@@ -28,4 +31,3 @@ exports.handler = async function (event, context) {
     };
   }
 };
-
