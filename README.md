@@ -34,8 +34,9 @@ User experience applies to every part of a website, including forms. You have to
 - [Introduction](#introduction)
 - [Goal](#goal)
 - [Prerequisites](#prerequisites)
-- [CORS](#cors)
+- [CORS :smiling_imp:](#cors-)
 - [Setup](#setup)
+- [Frontend Form](#frontend-form)
 
 ## Prerequisites
 
@@ -49,23 +50,22 @@ User experience applies to every part of a website, including forms. You have to
 - [Netlify](https://www.netlify.com/) account.
 - [Github](https://github.com/) account.
 
-## CORS
+## CORS :smiling_imp:
 
-Loading publicly accessible APIs from the frontend during development presents some problems. Mainly Cross-Origin Resource Sharing. CORS is a mechanism that uses additional HTTP headers to tell browsers to give a web application running at one origin, access to selected resources from a different origin. For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts.
+Loading publicly accessible APIs from the frontend during development presents some problems. Mainly **Cross-Origin Resource Sharing** (CORS). CORS is a mechanism that uses additional HTTP headers to tell browsers to give a web application running at one origin, access to selected resources from a different origin. For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts.
 
 > Ever seen this error?
 
-```bash
-Access to fetch at 'https://secure.shippingapis.com/ShippingAPI.dll?API=CityStateLookup&XML' from origin 'http://localhost:3000' has been blocked by CORS policy: Request header field accept is not allowed by Access-Control-Allow-Headers in preflight response.
-```
+![CORS Policy](https://citystatezipcode.s3.amazonaws.com/corspolicy.png)
 
 ## Setup
 
 Going under the presupposition that you have a basic understanding of HTML, CSS, and JavaScript, I am assuming you have installed `npm`, the latest version of `node`, React, `netlify-cli`, have a GitHub and Netlify account, and have registered to use USPS WebTools.
 
 1. Create a new repo on github.
-2. Create a new React project by typing `npx create-react-app <new-github-repo-name>`
-3. Delete all the boilerplate React code in `App.js`, so you're left with this:
+2. Create a new React site by typing `npx create-react-app <new-github-repo-name>`
+3. Navigate to your new folder by typing `cd <new-github-repo-name>`
+4. Delete all the boilerplate React code in `App.js`, so you're left with this:
 
 ```javascript
 import React from "react";
@@ -78,13 +78,114 @@ function App() {
 export default App;
 ```
 
-4. Delete all the CSS code in `App.css`.
-5. Push your code to Github to the repo you created earlier using these instructions => https://docs.github.com/en/github/importing-your-projects-to-github/adding-an-existing-project-to-github-using-the-command-line
-6. Go to app.netlify.com and login. Follow the instructions here to add a new site from Git => https://www.netlify.com/blog/2016/09/29/a-step-by-step-guide-deploying-on-netlify/
+5. Delete all the CSS code in `App.css`.
+6. Copy and paste the CSS code from this link => [App.css](https://citystatezipcode.s3.amazonaws.com/App.css).
+7. Push your code to Github to the repo you created earlier using these instructions => https://docs.github.com/en/github/importing-your-projects-to-github/adding-an-existing-project-to-github-using-the-command-line
+8. Go to app.netlify.com and login. Follow the instructions here to add your new site from Git => https://www.netlify.com/blog/2016/09/29/a-step-by-step-guide-deploying-on-netlify/
 
 You should now be setup to start the tutorial
 
+## Frontend Form
 
+First, let's start our development server. Type `yarn start` or `npm start` into your terminal.
+
+Since we are trying to fetch a city and state we need to create a form. It's a pretty standard so I won't go too big into explaining it.
+
+In the code below, we set a couple states using the React `useState()` hooks. We also set an initial value for the `cityState` so it starts as an empty string.
+
+We also added `<code>` so we can view our inputs as they are updated. (This can be removed later)
+
+We `disabled` the city and state input boxes because we do not want our user to have the ability to change it. You can also use the `readonly` attribute as well. The difference is minor but may make a difference depending on the end state of your form and accessibility needs. A `readonly` element is just not editable, but gets sent when the form submits. A `disabled` element isn't editable and isn't sent on submit. Another difference is that `readonly` elements can be focused (and getting focused when "tabbing" through a form) while disabled elements can't
+
+If you notice, there is nothing to `submit` the form because we are going to update the city and state as the user types into the zipcode input. You will also notice that you can't actually type anything into the form. We will fix this next.
+
+```javascript
+import React, { useState } from "react";
+import "./App.css";
+
+function App() {
+  const initialCityState = { city: "", state: "" };
+  const [cityState, setCityState] = useState(initialCityState);
+  const [zipcode, setZipcode] = useState("");
+  return (
+    <div className="App">
+      <h1>City/State Lookup Tool</h1>
+      <form action="" className="form-data">
+        <label htmlFor="zip">Type Zip Code Here</label>
+        <input
+          className="zip"
+          value={zipcode}
+          placeholder="XXXXX"
+          type="text"
+          name="zip"
+          id="zip"
+        />
+        <label htmlFor="city">City</label>
+        <input
+          className={`city`}
+          value={cityState.city}
+          type="text"
+          name="city"
+          disabled
+          id="city"
+        />
+        <label htmlFor="state">State</label>
+        <input
+          className={`state`}
+          value={cityState.state}
+          type="text"
+          name="state"
+          disabled
+          id="state"
+        />
+      </form>
+      <pre>
+        <code>
+          {JSON.stringify({
+            zipcode: zipcode,
+            city: cityState.city,
+            state: cityState.state,
+          })}
+        </code>
+      </pre>
+    </div>
+  );
+}
+
+export default App;
+```
+If you typed everything correctly, you should see this:
+
+![React started](https://citystatezipcode.s3.amazonaws.com/yarnstart.PNG)
+
+Let's add a little action to this form.
+
+We add an `onChange` handler to our `zipcode` element so that we can update the zipcode.
+
+We destructured the `value` from `event.target.value` to make it easier to read.
+
+We also add some validation and an [input mask](https://dev.to/vetswhocode/how-to-normalize-an-input-colloquially-known-as-how-to-create-an-input-mask-5gh4); this way we can insure that a user will only enter numbers and that it will only be five numbers (The length of US Postal Codes). The `value.replace(/[^\d{5}]$/, "").substr(0, 5))` block has a regular expression to only allow numbers and the `substr` will only allow five in the form.
+
+Now as you type in the form the code block at the bottom will update the zipcode.
+
+```javascript
+<input
+  className="zip"
+  value={zipcode || ""}
+  placeholder="XXXXX"
+  type="text"
+  name="zip"
+  id="zip"
+  onChange={(event) => {
+    const { value } = event.target;
+    setZipcode(value.replace(/[^\d{5}]$/, "").substr(0, 5));
+  }}
+/>
+```
+
+This is what you should be left with:
+
+![zip entered gif](https://citystatezipcode.s3.amazonaws.com/typezip.gif)
 
 <!-- omit in toc -->
 ## Sample Request
