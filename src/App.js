@@ -82,6 +82,7 @@ function App() {
       <form action="" className="form-data">
         <label htmlFor="zip">Type Zip Code Here</label>
         <input
+          maxLength="5"
           className="zip"
           value={zipcode || ""}
           placeholder="XXXXX"
@@ -106,7 +107,7 @@ function App() {
             id="city"
           />
           <div className="icon-container">
-            <i className={`${loading && isZipValid === 5 ? "loader" : ""}`}></i>
+            <i className={`${loading && isZipValid ? "loader" : ""}`}></i>
           </div>
         </div>
         <label htmlFor="state">State</label>
