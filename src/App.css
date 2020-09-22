@@ -56,7 +56,7 @@ label {
 .loader::after,
 .loader::before {
   content: "";
-  background: #ddd;
+  background: #fff;
   position: absolute;
   display: inline-block;
   width: 100%;
