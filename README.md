@@ -5,7 +5,7 @@
 
 ## Introduction
 
-User experience applies to every part of a website, including forms. You have to pay attention to accessibility, ease of use, and convenience. A form with good UX is easy to understand and easy to use. Who likes filling in forms? Umm, nobody! Using this thought process, I began to research what can I do to make an applicant form at the [Vets Who Code website](www.vetswhocode.io/apply) easier to use. I thought would be a good idea was to make the city and state self populate based on a user's U.S. Postal Code (Applicants are all veterans of US Forces). I started studying solutions. One was to use [ZipCodeAPI](www.zipcodeapi.com) but they charge for more than 10 requests per hour, and I am not in a position to pay for their service. Here at Vets Who Code, we like to build our own tools. I immediately thought, "How hard can it be to make my own zip code API for our use?" It appears it's not hard to get the basic functionality using the [United States Postal Service's Web Tools](https://www.usps.com/business/web-tools-apis/), a 100% free, tax-payer-funded service.
+User experience applies to every part of a website, including forms. You have to pay attention to accessibility, ease of use, and convenience. A form with good UX is easy to understand and easy to use. Who likes filling in forms? Umm, nobody! Using this thought process, I began to research what can I do to make an applicant form at the [Vets Who Code website](www.vetswhocode.io/apply) easier to use. I thought would be a good idea was to make the city and state self populate based on a user's U.S. Postal Code (Applicants are all veterans of US Forces). I started studying solutions. One was to use [ZipCodeAPI](www.zipcodeapi.com) but they charge for more than 10 requests per hour, and I am not in a position to pay for their service. Here at Vets Who Code, we like to build our own tools. I immediately thought, "How hard can it be to make my own zip code API for our use?" It appears it's not hard to get the basic functionality using the [United States Postal Service's Web Tools](https://www.usps.com/business/web-tools-apis/), a 100% free, U.S. tax-payer-funded service.
 
 ## Goal
 
@@ -58,9 +58,13 @@ Loading publicly accessible APIs from the frontend during development presents s
 
 ![CORS Policy](https://citystatezipcode.s3.amazonaws.com/corspolicy.png)
 
+## Typing vs Copying and Pasting Code
+
+I am a very big believer in typing code out that you intend to use for anything. Typing code versus copypasta provides a better learning return on investment because we're practicing instead of just reading. When we copy code without understanding it, we have a lesser chance of understanding what is happening. While it's nice to see our outcomes immediately the reward comes from understanding what we are doing. With that said, please don't copy and paste the code from this tutorial. Type. Everything. Out. You'll be a better programmer for it, trust me.
+
 ## Setup
 
-Going under the presupposition that you have a basic understanding of HTML, CSS, and JavaScript, I am assuming you have installed `npm`, the latest version of `node`, React, `netlify-cli`, have a GitHub and Netlify account, and have registered to use USPS WebTools.
+Going under the assupmtion that you have a basic understanding of HTML, CSS, and JavaScript, I am assuming you have installed `npm` or `yarn`, the latest version of `node`, React, `netlify-cli`, have a GitHub and Netlify account, and have registered to use USPS WebTools.
 
 1. Create a new repo on github.
 2. Create a new React site by typing `npx create-react-app <new-github-repo-name>`
@@ -95,7 +99,7 @@ In the code below, we set a couple states using the React `useState()` hooks. We
 
 We also added `<code>` so we can view our inputs as they are updated. (This can be removed later)
 
-We `disabled` the city and state input boxes because we do not want our user to have the ability to change it. You can also use the `readonly` attribute as well. The difference is minor but may make a difference depending on the end state of your form and accessibility needs. A `readonly` element is just not editable, but gets sent when the form submits. A `disabled` element isn't editable and isn't sent on submit. Another difference is that `readonly` elements can be focused (and getting focused when "tabbing" through a form) while disabled elements can't
+We `disabled` the city and state input boxes because we do not want our user to have the ability to change it. You can also use the `readonly` attribute as well. The difference is minor but may make a difference depending on the end state of your form and accessibility needs. A `readonly` element is just not editable, but gets sent when the form submits. A `disabled` element isn't editable and isn't sent on submit. Another difference is that `readonly` elements can be focused (and getting focused when "tabbing" through a form) while disabled elements cannot.
 
 If you notice, there is nothing to `submit` the form because we are going to update the city and state as the user types into the zipcode input. You will also notice that you can't actually type anything into the form. We will fix this next.
 
@@ -154,6 +158,7 @@ function App() {
 
 export default App;
 ```
+
 If you typed everything correctly, you should see this:
 
 ![React started](https://citystatezipcode.s3.amazonaws.com/yarnstart.PNG)
@@ -186,6 +191,25 @@ Now as you type in the form the code block at the bottom will update the zipcode
 This is what you should be left with:
 
 ![zip entered gif](https://citystatezipcode.s3.amazonaws.com/typezip.gif)
+
+## Netlify Functions
+
+The previously installed `netlify-cli` comes with some cool tools. One of them creates a serverless function that acts as a go between the frontend and an API that the app is trying to connect with. To interface with Netlify follow these steps:
+
+1. `netlify init` - This command is going to set off a chain of events. Firstly, if you have a Netlify account, it is going to ask for permission to access Netlify on your behalf. I would recommend clicking "Authorize". Close the browser and then return to your editor.
+2. Next, Netlify is going to ask if you want to create a Netlify site without a git repo. Click "No, I will connect this directory with Github first. Follow the instructions. It's going to walk you through the process of setting up a new repo and pushing it.
+3. Type `netlify init` again.
+4. Select `Create & configure a new site`. Part of the prerequisites required creating a Netlify account. This part will log yo in to Netlify. After that, select your 'team'.
+5. Name your site. It has a naming convention of only alphanumeric characters only so something like `city-state-lookup-tool' would work.
+6. You'll now have your partially completed app live.
+7. Next select `Authorize with Github through app.netlify.com`. A new page will open asking you to allow Netlify access to your repo. Once you allow access, you can close that browser window.
+8. The Netlify tool is going to ask you the build command for your site. For yarn it `CI=false yarn build`, for npm it's `CI=false npm run build`. The `CI=false` flag preceding the build command will stop treating warnings as errors, which will prevent your site from being built.
+9. `Directory to deploy?` leave blank
+10. `Netlify functions folder?` type `functions`
+11. `No netlify.toml detected. Would you like to create one with these build settings?` Type `Y`
+12. After this a series of steps will happen and you'll end up with `Success! Netlify CI/CD Configured!`.
+
+To be continued...
 
 <!-- omit in toc -->
 ## Sample Request

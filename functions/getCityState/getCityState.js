@@ -14,10 +14,10 @@ const config = {
 
 exports.handler = async function (event, context) {
   const zipcode = event.queryStringParameters.zipcode;
-  console.log("EVENT===", event.queryStringParameters);
+  //console.log("EVENT===", event.queryStringParameters);
   const xml = `<CityStateLookupRequest USERID="${USERID}"><ZipCode ID="0"><Zip5>${zipcode}</Zip5></ZipCode></CityStateLookupRequest>`;
   try {
-    console.log("ZIP: ", zipcode);
+    //console.log("ZIP: ", zipcode);
     const response = await fetch(`${BASE_URI}${xml}`, config);
     if (!response.ok) {
       return { statusCode: response.status, body: response };
