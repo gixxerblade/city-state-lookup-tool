@@ -6,7 +6,7 @@
 
 ## Introduction
 
-User experience applies to every part of a website, including forms. You have to pay attention to accessibility, ease of use, and convenience. A form with good UX is easy to understand and easy to use. Who likes filling in forms? Umm, nobody! Using this thought process, I began to research what can I do to make an applicant form at the [Vets Who Code website](www.vetswhocode.io/apply) easier to use. I thought would be a good idea was to make the city and state self populate based on a user's U.S. Postal Code (Applicants are all veterans of US Forces). I started studying solutions. One was to use [ZipCodeAPI](www.zipcodeapi.com) but they charge for more than 10 requests per hour, and I am not in a position to pay for their service. Here at Vets Who Code, we like to build our own tools. I immediately thought, "How hard can it be to make my own zip code API for our use?" It appears it's not hard to get the basic functionality using the [United States Postal Service's Web Tools](https://www.usps.com/business/web-tools-apis/), a 100% free, U.S. tax-payer-funded service.
+User experience applies to every part of a website, including forms. You have to pay attention to accessibility, ease of use, and convenience. A form with good UX is easy to understand and easy to use. Who likes filling in forms? Umm, nobody! Using this thought process, I began to research what can I do to make an applicant form at the [Vets Who Code website](www.vetswhocode.io/apply) easier to use. I thought would be a good idea was to make the city and state self populate based on a user's U.S. Postal Code (Applicants are all veterans of US Forces). I started studying solutions. One was to use ZipCodeAPI but they charge for more than 10 requests per hour, and I am not in a position to pay for their service. Here at Vets Who Code, we like to build our own tools. I immediately thought, "How hard can it be to make my own zip code API for our use?" It appears it's not hard to get the basic functionality using the [United States Postal Service's Web Tools](https://www.usps.com/business/web-tools-apis/), a 100% free, U.S. tax-payer-funded service.
 
 ## Goal
 
@@ -315,46 +315,126 @@ import React, { useState, useEffect } from "react";
 
 function App() {
   const initialCityState = { city: "", state: "" };
-  // eslint-disable-next-line
   const [cityState, setCityState] = useState(initialCityState);
   const [zipcode, setZipcode] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Creating a new function named fetchCityState. We could have this outside
+    // the useEffect but this makes it more readable.
     const fetchCityState = async () => {
+      // We are using a try/catch block inside an async function
+      // which handles all the promises
       try {
+        // Send a fetch request to the getCityState serverless function
         const response = await fetch(
           `/.netlify/functions/getCityState?zipcode=${zipcode}`,
           { headers: { accept: "application/json" } }
         );
+        // We assign data to the response we receive from the fetch
         const data = await response.text();
         console.log(data)
+        // Using a spread operator is an easy way to populate our city/state
+        // form
+        setCityState({...cityState, city: data, state: "" )
+        // The catch(e) will console.error any errors we receive
       } catch (e) {
         console.log(e);
       }
     };
-
+    // Run the above function
     fetchCityState();
+    //The optional array below will run any time the zipcode
+    // field is updated
   }, [zipcode]);
 }
 ```
 
 Let's go ahead and restart our development server, except this time use `netlify dev` instead of `yarn start` or `npm start`. We're using this command now because Netlify is going to start taking over things like connection to a serverless function.
 
-To be continued...
+This is what you should see:
 
-<!-- omit in toc -->
+![xml object](https://citystatezipcode.s3.amazonaws.com/xmlobject.png)
 
-## Sample Request
+If you type anything into the **Zip Code** field the `<code>` block below the form should update to show the city and state in the `xml` field. Small problem though. We want to be able to use it. We'll take care of this next.not-rounded
 
-Request: CityStateLookup
+## Parsing XML to JSON
+
+There are many tools out there to parse xml to json but I wanted a native solution. Sure, many of the tools out there cover edge cases but since we know what we are getting back from the USPS, I thought a more native solution to the problem would be better. As it stands this is what we are sending to the USPS:
 
 ```html
 <CityStateLookupRequest USERID="XXXXXXXXXXXX">
-  <ZipCode ID="0">
+  <ZipCode ID="90210">
     <Zip5>20024</Zip5>
   </ZipCode>
 </CityStateLookupRequest>
 ```
 
-Data in XML
+and this is what we receive:
+
+```html
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CityStateLookupResponse><ZipCode ID=\"0\"><Zip5>90210</Zip5><City>BEVERLY HILLS</City><State>CA</State></ZipCode></CityStateLookupResponse>"
+```
+
+Which is a stringified version of xml.
+
+![](https://res.cloudinary.com/practicaldev/image/fetch/s--efGGmIaG--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://cdn-images-1.medium.com/max/1600/1%2AXuRqFNT2fMExddcrERq-6g.jpeg)
+
+So how do we go about going from the stringified xml to this:
+
+```json
+[{ "ZipCode": 910210, "City": "BEVERLY HILLS", "State": "CA" }]
+```
+
+[DEV](https://dev.to) to the rescue!
+
+I followed along with this article written by {% user niinpatel %}
+
+{% link niinpatel/converting-xml-to-json-using-recursion-2k4j %}
+
+According to the article:
+
+> Since, XML has a lot of nested tags, this problem is a perfect example of a practical application of recursion.
+
+An elegant solution to a difficult problem. It uses the [**DOMParser Web API**](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser) which according to the documentation it...
+
+> parses XML or HTML to source code from a string into a DOM TREE.
+
+Here's the function from the article:
+
+```javascript
+function xml2json(srcDOM) {
+  let children = [...srcDOM.children];
+
+  // base case for recursion.
+  if (!children.length) {
+    return srcDOM.innerHTML;
+  }
+
+  // initializing object to be returned.
+  let jsonResult = {};
+
+  for (let child of children) {
+    // checking is child has siblings of same name.
+    let childIsArray =
+      children.filter((eachChild) => eachChild.nodeName === child.nodeName)
+        .length > 1;
+
+    // if child is array, save the values as array, else as strings.
+    if (childIsArray) {
+      if (jsonResult[child.nodeName] === undefined) {
+        jsonResult[child.nodeName] = [xml2json(child)];
+      } else {
+        jsonResult[child.nodeName].push(xml2json(child));
+      }
+    } else {
+      jsonResult[child.nodeName] = xml2json(child);
+    }
+  }
+
+  return jsonResult;
+}
+```
+
+Let's type this into our `App.js` file right below the import statement.
+
+We now have the last piece of our puzzle and should be able to parse the response from the USPS to something usable.
