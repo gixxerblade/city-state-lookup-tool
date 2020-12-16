@@ -1,6 +1,7 @@
 ![Mail carrier](https://citystatezipcode.s3.amazonaws.com/BlogArt_ZipCodeAllegiance%5B1%5D.jpg)
 
 <!-- omit in toc -->
+
 # City/State Lookup using United States Postal Service API
 
 ## Introduction
@@ -16,12 +17,14 @@ User experience applies to every part of a website, including forms. You have to
 - Add animation as the API "loads" the city and state.
 
 <!-- omit in toc -->
+
 ### Front-end
 
 - [React](https://reactjs.org/) for building the user interface
 - Fetch API to GET items from the serverless function
 
 <!-- omit in toc -->
+
 ### Backend
 
 - Use [Netlify Dev](https://www.netlify.com/products/dev/) to create a serverless function
@@ -29,6 +32,7 @@ User experience applies to every part of a website, including forms. You have to
 - GET data from API
 
 <!-- omit in toc -->
+
 ## Table of Content
 
 - [Introduction](#introduction)
@@ -209,9 +213,138 @@ The previously installed `netlify-cli` comes with some cool tools. One of them c
 11. `No netlify.toml detected. Would you like to create one with these build settings?` Type `Y`
 12. After this a series of steps will happen and you'll end up with `Success! Netlify CI/CD Configured!`.
 
+A new file should have been created named `netlify.toml`. If you open it up it should look similar to this:
+
+```toml
+[build]
+  command = "CI=false yarn build"
+  functions = "functions"
+  publish: "."
+```
+
+## Serverless Functions
+
+To talk to our back end without any CORS issues we need to create a serverless function. A serverless function is an app that runs on a managed server, like AWS or in this case, Netlify. The companies then manage the the server maintenance and execution of the code. They are nice because the serverless framweorks handle the go between a hosted API and the frontend application.
+
+![serverless architechture](https://citystatezipcode.s3.amazonaws.com/serverlessArchitechture.png)
+
+1. In your terminal type `netlify functions:create`.
+2. Typing this will create a dialog. Select `node-fetch`
+3. Name your function something easy to remember like `getCityState`. If you observe we now have a new folder located at the root of your directory named `functions`. In it should be the generated file named `getCityState.js` with a `node_modules` folder, and a few other files.
+4. Open the `getCityState.js` file and delete the content below `const fetch = require("node-fetch")`
+
+In the `getCityState.js` file add a couple of constants. One is for the secret key which we'll handle soon, one is for the API request link, and the last one is HTML headers which the frontend needs to handle permission to read what the function returns.
+
+```javascript
+const fetch = require("node-fetch");
+
+const USER_ID = process.env.REACT_APP_USERID;
+const BASE_URI =
+  "http://production.shippingapis.com/ShippingAPITest.dll?API=CityStateLookup&XML=";
+const config = {
+  headers: {
+    "Content-Type": "text/xml",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": true,
+    "Access-Control-Allow-Methods": "GET",
+  },
+  method: "get",
+};
+```
+
+Below that add the main function:
+
+```javascript
+exports.handler = async function (event, context) {
+  // The zipcode is sent by the frontend application. This is where we use it.
+  const zipcode = event.queryStringParameters.zipcode;
+
+  // The xml variable is the string we are going to send to the USPS to request the information
+  const xml = `<CityStateLookupRequest USERID="${USERID}"><ZipCode ID="0"><Zip5>${zipcode}</Zip5></ZipCode></CityStateLookupRequest>`;
+  try {
+    // Using synatantic sugar (async/await) we send a fetch request with all the
+    // required information to the USPS.
+    const response = await fetch(`${BASE_URI}${xml}`, config);
+    // We first check if we got a good response. response.ok is saying hey, did
+    // we receive a good response?
+    if (!response.ok) {
+      // If we did get a good response we store the response object in the
+      // variable
+      return { statusCode: response.status, body: response };
+    }
+    // Format the response as text because the USPS response is not
+    // JSON but xml
+    const data = await response.text();
+    // Return the response to the frontend where it will be used.
+    return {
+      statusCode: 200,
+      body: data,
+    };
+    // Error checking is very important because if we don't get a response this
+    // is what we will use to troubleshoot problems
+  } catch (err) {
+    console.log("Error: ", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ msg: err.message }),
+    };
+  }
+};
+```
+
+Add a new file named `.env` the root of the project and add your user information from the USPS. When you signed up they should have sent an email with this information. The title of the email should be similar to **Important USPS Web Tools Registration Notice** from *registration@shippingapis.com*
+
+In the `.env` file:
+
+```env
+# USPS API Info:
+REACT_APP_USERID="1234567890123"
+```
+
+> **IMPORTANT!!!**
+> ADD YOUR .ENV FILE TO THE `.gitignore` FILE
+
+## Putting it all together
+
+Up to this point we've created a form where we can enter a zipcode, santized our input, created a repo on Github, connected the repo to Netlify, and created a serverless function. Now to put it all together and get some info from the USPS to display the city and state of the entered zipcode by "fetching" the data.
+
+In `App.js` import `useEffect` and add the `useEffect` hook
+
+```javascript
+import React, { useState, useEffect } from "react";
+
+function App() {
+  const initialCityState = { city: "", state: "" };
+  // eslint-disable-next-line
+  const [cityState, setCityState] = useState(initialCityState);
+  const [zipcode, setZipcode] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCityState = async () => {
+      try {
+        const response = await fetch(
+          `/.netlify/functions/getCityState?zipcode=${zipcode}`,
+          { headers: { accept: "application/json" } }
+        );
+        const data = await response.text();
+        console.log(data)
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    fetchCityState();
+  }, [zipcode]);
+}
+```
+
+Let's go ahead and restart our development server, except this time use `netlify dev` instead of `yarn start` or `npm start`. We're using this command now because Netlify is going to start taking over things like connection to a serverless function.
+
 To be continued...
 
 <!-- omit in toc -->
+
 ## Sample Request
 
 Request: CityStateLookup
